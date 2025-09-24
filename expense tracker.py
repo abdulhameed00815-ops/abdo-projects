@@ -36,7 +36,7 @@ while True:
         if usr_options == '+':
             expense_description = input("New expense: ")
             expense_amount = float(input("Amount: "))
-            expense_fuck = datetime.now()
+            expense_date = datetime.now()
             date_string = expense_date.strftime("%d/%m/%Y")
 
             new_expense = {
@@ -83,4 +83,6 @@ while True:
                 expense["description"] = update
                 save_expenses(expenses)
                 print("expense updated!")
+
+
 
