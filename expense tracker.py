@@ -36,7 +36,7 @@ while True:
         if usr_options == '+':
             expense_description = input("New expense: ")
             expense_amount = float(input("Amount: "))
-            expense_date = datetime.now()
+            expense_fuck = datetime.now()
             date_string = expense_date.strftime("%d/%m/%Y")
 
             new_expense = {
