@@ -21,6 +21,7 @@ expenses = load_expenses()
 
 print("yeah this is the update")
 print("first change")
+print("second change")
 
 while True:
     usr_options = input("""
