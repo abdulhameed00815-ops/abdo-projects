@@ -20,6 +20,7 @@ def save_expenses(data):
 expenses = load_expenses()
 
 print("yeah this is the update")
+print("first change")
 
 while True:
     usr_options = input("""
@@ -85,7 +86,6 @@ while True:
                 expense["description"] = update
                 save_expenses(expenses)
                 print("expense updated!")
-print("yeah this is the update")
 
 
 
