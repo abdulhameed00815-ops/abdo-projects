@@ -27,3 +27,5 @@ conn.commit()
 conn.close()
 
 cur.close()
+
+print("hello")
