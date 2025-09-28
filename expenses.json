@@ -1,0 +1,9 @@
+{
+    "expenses": [
+        {
+            "description": "healthy oats",
+            "amount": 70.0,
+            "date": "23/09/2025"
+        }
+    ]
+}
