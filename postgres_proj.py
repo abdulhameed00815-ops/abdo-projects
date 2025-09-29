@@ -7,7 +7,7 @@ cur = conn.cursor()
 cur.execute("""CREATE TABLE IF NOT EXISTS person(
     id INT PRIMARY KEY,
     name VARCHAR(255),
-    age INT,
+    age INT CHECK (age > 0),
     gender CHAR
 );
 """)
@@ -19,13 +19,26 @@ cur.execute("""INSERT INTO person (id, name, age, gender) VALUES
 (4, 'sobhy', 23, 'm');
 """)
 
-sql = cur.execute("""SELECT * FROM person WHERE starts_with(name, %s) AND age > %s;
-""", ("b", 25))
+cur.execute("""CREATE TABLE IF NOT EXISTS boys(
+    id SERIAL PRIMARY KEY,
+    boy_id INT REFERENCES person(id)
+)""")
+
+cur.execute("""INSERT INTO boys (id, boy_id) VALUES
+(1, 1)
+""")
+
+cur.execute("""SELECT boys.boy_id, person.name, person.age, person.gender
+            FROM boys
+            JOIN person ON boys.boy_id = person.id;
+""")
+print(cur.fetchall())
+
 
 conn.commit()
 
-conn.close()
-
 cur.close()
+
+conn.close()
 
 print("hello")
