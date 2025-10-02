@@ -45,8 +45,10 @@ cur.execute("""CREATE TABLE IF NOT EXISTS orders(
 
 cur.execute("""INSERT INTO orders(id, customer_id, product_id, quantity, price) VALUES
 (1, 1, 1, 1, 11),
-(2, 3, 2, 1, 30),
-(3, 3, 3, 0, 3)
+(2, 1, 1, 1, 11),
+(3, 3, 2, 1, 30),      
+(4, 3, 2, 1, 30),
+(5, 3, 3, 1, 3)
 ON CONFLICT (id) DO NOTHING;
 """)
 
@@ -54,12 +56,35 @@ ON CONFLICT (id) DO NOTHING;
 #Customers can have multiple orders
 #Products can appear in multiple orders
 
-cur.execute("""SELECT products.name, SUM(orders.price * orders.quantity)
+cur.execute("""SELECT products.name, SUM(orders.price)
 FROM orders
 JOIN products ON orders.product_id = products.id
 GROUP BY products.name;
 """)
 print(cur.fetchall())
+
+cur.execute("""SELECT name, age
+FROM customers
+WHERE age > (SELECT AVG(age) FROM customers);
+""")
+print(cur.fetchall())
+
+cur.execute("""SELECT products.name,
+(SELECT COUNT(*)
+FROM orders
+WHERE orders.product_id = products.id) AS order_count
+FROM products;
+""")
+print(cur.fetchall())
+
+cur.execute("""SELECT customers.name
+FROM customers WHERE id IN (
+            SELECT customer_id
+            FROM orders
+            WHERE product_id = 1
+);
+""")
+print(f"people who bought chips: {cur.fetchall()}")
 
 conn.commit()
 
