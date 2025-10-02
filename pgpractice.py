@@ -39,14 +39,14 @@ cur.execute("""CREATE TABLE IF NOT EXISTS orders(
     customer_id INT REFERENCES customers(id),
     product_id INT REFERENCES products(id),
     quantity INT,
-    order_date INT
+    price INT
 );
 """)
 
-cur.execute("""INSERT INTO orders(id, customer_id, product_id, quantity, order_date) VALUES
+cur.execute("""INSERT INTO orders(id, customer_id, product_id, quantity, price) VALUES
 (1, 1, 1, 1, 11),
 (2, 3, 2, 1, 30),
-(3, 3, 3, 1, 3)
+(3, 3, 3, 0, 3)
 ON CONFLICT (id) DO NOTHING;
 """)
 
@@ -54,13 +54,12 @@ ON CONFLICT (id) DO NOTHING;
 #Customers can have multiple orders
 #Products can appear in multiple orders
 
-cur.execute("""SELECT customers.name, products.name, orders.quantity, order_date
+cur.execute("""SELECT products.name, SUM(orders.price * orders.quantity)
 FROM orders
-INNER JOIN customers ON orders.customer_id = customers.id
-INNER JOIN products ON orders.product_id = products.id;
+JOIN products ON orders.product_id = products.id
+GROUP BY products.name;
 """)
 print(cur.fetchall())
-
 
 conn.commit()
 
