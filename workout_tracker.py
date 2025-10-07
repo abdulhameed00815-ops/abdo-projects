@@ -15,13 +15,22 @@ cur.execute("""CREATE TABLE IF NOT EXISTS workouts(
 
 cur.execute("""CREATE TABLE IF NOT EXISTS gym_bros(
         name1 VARCHAR(255),
-        workout_id INT REFERENCES workouts(workouts_id)
+        workout_id INT
 );
 """)
 cur.execute("""INSERT INTO gym_bros (name1, workout_id) VALUES 
         ('jason', 1),
         ('joshua', 2),
         ('jenny', 3);
+""")
+
+cur.execute("""ALTER TABLE gym_bros DROP CONSTRAINT IF EXISTS gym_bros_workout_id_fkey;
+
+""")
+
+cur.execute("""ALTER TABLE gym_bros
+            DROP CONSTRAINT IF EXISTS fk_workout;
+
 """)
 
 cur.execute("""ALTER TABLE gym_bros
@@ -31,8 +40,9 @@ cur.execute("""ALTER TABLE gym_bros
             ON DELETE CASCADE
             ON UPDATE CASCADE;
 """)
+conn.commit()
 
-cur.execute("""CREATE VIEW workouts_done_by_gym_bro AS
+cur.execute("""CREATE OR REPLACE VIEW workouts_done_by_gym_bro AS
             SELECT gym_bros.name1, 
         (SELECT workouts.workout_type FROM workouts WHERE gym_bros.workout_id = workouts.workouts_id)
         FROM gym_bros;
@@ -65,6 +75,8 @@ while True:
 'g': gym-bro and the workouts he does
 'c': counts how many workouts of each type exist
 'p': total training time per person
+'u': update workout
+'d': delete workout
 :
 """)
     if choice == "s":
@@ -98,6 +110,26 @@ while True:
         GROUP BY gym_bros.name1;
 """)
         print(cur.fetchall())
+    elif choice == 'u':
+        cur.execute("SELECT * FROM workouts;")
+        print(cur.fetchall())
+        workout_to_update = input("which workout to update? (enter id)")
+        new_workout = input("new workout: ")
+        cur.execute("""UPDATE workouts
+                    SET workout_type = (%s)
+                    WHERE workouts_id = (%s);
+""", (new_workout, workout_to_update))
+        print("workout updated successfuly!")
+    elif choice == 'd':
+        cur.execute("SELECT * FROM workouts;")
+        print(cur.fetchall())
+        workout_to_delete = input("which workout to delete? (enter id)")
+        cur.execute("""DELETE FROM workouts
+                    WHERE workouts_id = (%s);
+""", (workout_to_delete))
+        conn.commit()
+
+        print("workout updated deleted!")
     elif choice == "q":
         break
 
