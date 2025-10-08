@@ -18,19 +18,18 @@ cur.execute("""CREATE TABLE IF NOT EXISTS gym_bros(
         workout_id INT
 );
 """)
-cur.execute("""INSERT INTO gym_bros (name1, workout_id) VALUES 
-        ('jason', 1),
-        ('joshua', 2),
-        ('jenny', 3);
-""")
+cur.execute("SELECT COUNT(*) FROM gym_bros;")
+count = cur.fetchone()[0]
+if count == 0:
+    cur.execute("""INSERT INTO gym_bros (name1, workout_id) VALUES 
+            ('jason', 1),
+            ('joshua', 2),
+            ('jenny', 3);
+    """)
 
-cur.execute("""ALTER TABLE gym_bros DROP CONSTRAINT IF EXISTS gym_bros_workout_id_fkey;
-
-""")
-
-cur.execute("""ALTER TABLE gym_bros
-            DROP CONSTRAINT IF EXISTS fk_workout;
-
+cur.execute("""
+    ALTER TABLE gym_bros
+    DROP CONSTRAINT IF EXISTS fk_workout;
 """)
 
 cur.execute("""ALTER TABLE gym_bros
@@ -94,7 +93,8 @@ while True:
 """, (selected_workout,))
         print(f"you 've done it {cur.fetchall()} times!")
     elif choice == 'g':
-        cur.execute("""SELECT (*) FROM workouts_done_by_gym_bro
+        cur.execute("""SELECT *
+                    FROM workouts_done_by_gym_bro
 """)
         print(cur.fetchall())
     elif choice == 'c':
