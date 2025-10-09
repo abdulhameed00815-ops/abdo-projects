@@ -13,11 +13,25 @@ cur.execute("""CREATE TABLE IF NOT EXISTS workouts(
     );
 """)
 
+cur.execute("""SELECT COUNT(*) FROM workouts
+""")
+
+
+workouts_count = cur.fetchone()[0]
+if workouts_count == 0:
+    cur.execute("""INSERT INTO workouts (workout_type, workout_time, workout_date) VALUES
+        ('pushups', 30, CURRENT_DATE),
+        ('jumping jacks', 30, CURRENT_DATE),
+        ('squats', 30, CURRENT_DATE);
+""")
+
 cur.execute("""CREATE TABLE IF NOT EXISTS gym_bros(
+        gym_bro_id SERIAL PRIMARY KEY,
         name1 VARCHAR(255),
         workout_id INT
 );
 """)
+
 cur.execute("SELECT COUNT(*) FROM gym_bros;")
 count = cur.fetchone()[0]
 if count == 0:
@@ -27,6 +41,7 @@ if count == 0:
             ('jenny', 3);
     """)
 
+#i encountered an error where everytime i rerun the code the interpreter  tries to recreate the existing constraint on the gym bros table, so i added this line to start fresh everytime i rerun the code
 cur.execute("""
     ALTER TABLE gym_bros
     DROP CONSTRAINT IF EXISTS fk_workout;
@@ -41,6 +56,7 @@ cur.execute("""ALTER TABLE gym_bros
 """)
 conn.commit()
 
+#just a view set as a function instead of making a whole new table or defining a function
 cur.execute("""CREATE OR REPLACE VIEW workouts_done_by_gym_bro AS
             SELECT gym_bros.name1, 
         (SELECT workouts.workout_type FROM workouts WHERE gym_bros.workout_id = workouts.workouts_id)
@@ -48,20 +64,25 @@ cur.execute("""CREATE OR REPLACE VIEW workouts_done_by_gym_bro AS
             
 """)
 
+
 def add_workout():
     added_workout = input("workout: ")
     cur.execute("""INSERT INTO workouts (workout_type, workout_time, workout_date) VALUES (%s, %s, CURRENT_DATE);
         """, (added_workout, 30))
     print("workout added successfuly!")
+
+
 def weekly_workouts():
     cur.execute("""SELECT * FROM workouts WHERE workout_date >= CURRENT_DATE - INTERVAL '7 days';
 """)
     print(cur.fetchall())
 
+
 def time_trained():
     cur.execute("""SELECT SUM(workouts.workout_time) AS total_time FROM workouts;
 """)
     print(cur.fetchall())
+
 
 while True:
     choice = input("""
@@ -77,7 +98,7 @@ while True:
 'u': update workout
 'd': delete workout
 :
-""")
+""").lower()
     if choice == "s":
         cur.execute("SELECT * FROM workouts;")
         print(cur.fetchall())
