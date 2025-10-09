@@ -97,6 +97,7 @@ while True:
 'p': total training time per person
 'u': update workout
 'd': delete workout
+'x': how many gymbros have done the workout
 :
 """).lower()
     if choice == "s":
@@ -151,6 +152,17 @@ while True:
         conn.commit()
 
         print("workout updated deleted!")
+    elif choice == "x":
+        cur.execute("""WITH workouts_count AS (
+            SELECT workout_id, COUNT(*) AS count_per_workout
+            FROM gym_bros
+            GROUP BY workout_id
+            )
+            SELECT workouts.workout_type, workouts_count.count_per_workout
+            FROM workouts
+            JOIN workouts_count ON workouts.workouts_id = workouts_count.workout_id;
+""")
+        print(cur.fetchall())
     elif choice == "q":
         break
 
