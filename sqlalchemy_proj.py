@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, ForeignKey
+from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, ForeignKey, func
 
 engine = create_engine("postgresql+psycopg2://postgres:1234@localhost:5432/sqlalchemy_db", echo=True)
 
@@ -9,7 +9,7 @@ people = Table(
     meta,
     Column("id", Integer, primary_key=True),
     Column("name", String, nullable=False),
-    Column("age", Integer, ForeignKey('people.id')),
+    Column("age", Integer),
 )
 
 
@@ -18,7 +18,7 @@ things = Table(
     meta,
     Column('id', Integer, primary_key=True),
     Column('description', String, nullable=False),
-    Column('owner', Integer),
+    Column('owner', Integer, ForeignKey('people.id')),
     Column('value', Integer)
 
 )
@@ -33,7 +33,7 @@ insert_people = people.insert().values([
     {"name": "fred", "age": 33},
     {"name": "basmallah", "age": 21}
 ])
-
+conn.execute(insert_people)
 conn.commit()
 
 insert_things = things.insert().values([
@@ -42,12 +42,12 @@ insert_things = things.insert().values([
     {"description": "toothbrush", "value": 51, "owner": 3},
     {"description": "lipstick", "value": 250, "owner": 4},
 ])
-
+conn.execute(insert_things)
 conn.commit()
 
-join_statement = people.join(things, people.c.id == things.c.owner)
-select_statement = people.select().with_only_columns(people.c.name, things.c.description).select_from(join_statement)
-result = conn.execute(select_statement)
+group_by_statement = things.select().with_only_columns(things.c.owner, func.sum(things.c.value)).group_by(things.c.owner)
+
+result = conn.execute(group_by_statement)
 
 for row in result.fetchall():
     print(row)
