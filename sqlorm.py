@@ -1,5 +1,5 @@
 from sqlalchemy import create_engine, Integer, Float, String, Column, ForeignKey, func
-from sqlalchemy.orm import declarative_base, sessionmaker, relationship
+from sqlalchemy.orm import declarative_base, sessionmaker, relationship, joinedload
 
 engine = create_engine('postgresql+psycopg2://postgres:1234@localhost:5432/sqlalchemy_db')
 
@@ -32,4 +32,10 @@ session.flush()
 new_thing = Thing(description='chemise', value=800, owner=new_person.id)
 session.add(new_thing)
 session.commit()
+
+people = session.query(Person).options(joinedload(Person.things)).all()
+for p in people:
+    print(p.name)
+    for t in p.things:
+        print("-  ", t.description)
 
