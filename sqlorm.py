@@ -25,14 +25,11 @@ Base.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
 session = Session()
 
-new_person = Person(name='esra2', age=17)
+new_person = Person(name='mekka', age=19)
 session.add(new_person)
 session.flush()
 
-new_thing = Thing(description='robe', value=1400, owner=new_person.id)
+new_thing = Thing(description='chemise', value=800, owner=new_person.id)
 session.add(new_thing)
 session.commit()
 
-result = session.query(Thing.owner, func.sum(Thing.value)).group_by(Thing.owner).all()
-
-print(result)
