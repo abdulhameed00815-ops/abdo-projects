@@ -33,6 +33,7 @@ new_thing = Thing(description='chemise', value=800, owner=new_person.id)
 session.add(new_thing)
 session.commit()
 
+#the fix for n+1 problem...
 people = session.query(Person).options(joinedload(Person.things)).all()
 for p in people:
     print(p.name)
