@@ -2,7 +2,15 @@ from fastapi import FastAPI, HTTPException
 from typing import List, Optional
 from enum import IntEnum
 from pydantic import BaseModel, Field
+import asyncio
+from api_database import engine, Base
 api = FastAPI()
+
+async def init_models():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+asyncio.run(init_models())
 
 class Priority(IntEnum):
     LOW = 3
@@ -56,11 +64,13 @@ def create_todo(todo: TodoCreate):
     return new_todo
 
 @api.put('/todo/{todo_id}', response_model=Todo)
-def update_todo(todo_id: int, updated_todo=TodoUpdate):
+def update_todo(todo_id: int, updated_todo: TodoUpdate):
     for todo in all_todos:
         if todo.todo_id == todo_id:
-            todo.todo_name == update_todo.todo_name
-            todo.priority == update_todo.priority
+            if updated_todo.todo_name is not None:
+                todo.todo_name = updated_todo.todo_name
+            if updated_todo.priority is not None:
+                todo.priority = updated_todo.priority
             return todo
     raise HTTPException(status_code=404, detail='todo not found bitch!')
 
@@ -68,7 +78,7 @@ def update_todo(todo_id: int, updated_todo=TodoUpdate):
 def delete_todo(todo_id: int):
     for index, todo in enumerate(all_todos):
         if todo.todo_id == todo_id:
-            delete_todo = all_todos.pop(index)
-            return delete_todo
+            deleted_todo = all_todos.pop(index)
+            return deleted_todo
     raise HTTPException(status_code=404, detail='todo not found bitch!')
 
