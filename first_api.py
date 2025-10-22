@@ -1,9 +1,11 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from typing import List, Optional
 from enum import IntEnum
 from pydantic import BaseModel, Field
-import asyncio
-from api_database import engine, Base
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+from api_database import engine, Base, get_db
+from models import Todo as TodoModel, Priority
 api = FastAPI()
 
 async def init_models():
@@ -31,54 +33,59 @@ class TodoUpdate(BaseModel):
     todo_name: Optional[str] = Field(None, min_length=3, max_length=512, description='name of the todo')
     priority: Optional[Priority] = Field(None, description='priority of todo')
 
-all_todos = [
-        Todo(todo_id=1, todo_name='code'),
-        Todo(todo_id=2, todo_name='clean'),
-        Todo(todo_id=3, todo_name='workout')
-]
 
 
-@api.get('/todos/{todo_id}', response_model=Todo)
-def get_todo(todo_id: int):
-    for todo in all_todos:
-        if todo.todo_id == todo_id:
-            return todo
-    
-    raise HTTPException(status_code=404, detail='todo not found bitch!')
 
-@api.get('/todos', response_model=List[Todo])
-def get_todos(first_n: int = None):
+@api.get('/todos/{todo_id}', response_model=TodoModel)
+async def get_todo(todo_id: int, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(TodoModel).where(TodoModel.todo_id == todo_id))
+    todo = result.scalar_one_or_none()
+    if todo is None:
+       raise HTTPException(status_code=404, detail='todo not found bitch!')
+    return todo
+
+@api.get('/todos', response_model=List[TodoModel])
+async def get_todos(first_n: int | None=None, db: AsyncSession = Depends(get_db)):
+    query = select(TodoModel)
     if first_n:
-        return all_todos[:first_n]
-    else:
-        return all_todos
+        query = query.limit(first_n)
+    result = await db.execute(query)
+    Todos = result.scalars().all()
+    return Todos
 
 
-@api.post('/todos', response_model=Todo)
-def create_todo(todo: TodoCreate):
-    new_todo_id = max(todo.todo_id for todo in all_todos) + 1
-    new_todo = Todo(todo_id=new_todo_id, todo_name=todo.todo_name, priority=todo.priority)
-
-
-    all_todos.append(new_todo)
+@api.post('/todos', response_model=TodoModel)
+async def create_todo(todo: TodoCreate, db: AsyncSession = Depends(get_db)):
+    new_todo = TodoModel(
+        todo_name=todo.todo_name,
+        priority=todo.priority
+    )
+    db.add(new_todo)
+    await db.commit()
+    await db.refresh(new_todo)
     return new_todo
 
-@api.put('/todo/{todo_id}', response_model=Todo)
-def update_todo(todo_id: int, updated_todo: TodoUpdate):
-    for todo in all_todos:
-        if todo.todo_id == todo_id:
-            if updated_todo.todo_name is not None:
-                todo.todo_name = updated_todo.todo_name
-            if updated_todo.priority is not None:
-                todo.priority = updated_todo.priority
-            return todo
-    raise HTTPException(status_code=404, detail='todo not found bitch!')
 
-@api.delete('/todo/{todo_id}', response_model=Todo)
-def delete_todo(todo_id: int):
-    for index, todo in enumerate(all_todos):
-        if todo.todo_id == todo_id:
-            deleted_todo = all_todos.pop(index)
-            return deleted_todo
-    raise HTTPException(status_code=404, detail='todo not found bitch!')
+@api.put('/todo/{todo_id}', response_model=TodoModel)
+async def update_todo(todo_id: int, updated_todo: TodoUpdate, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(TodoModel).where(TodoModel.todo_id == todo_id))
+    todo = result.scalars().first()
+
+    if not todo:
+        raise HTTPException(status_code=404, detail='todo not found bitch!')
+    todo.todo_name == updated_todo.todo_name
+    todo.priority == updated_todo.priority
+    await db.commit()
+    await db.refresh(todo)
+    return todo
+
+@api.delete('/todo/{todo_id}', response_model=TodoModel)
+async def delete_todo(todo_id: int, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(TodoModel).where(TodoModel.todo_id == todo_id))
+    todo = result.scalars().first()
+    if not todo:
+        raise HTTPException(status_code=404, detail='todo not found bitch!')
+    await db.delete(todo)
+    await db.commit()
+    return {"message": "TodoModel deleted successfully"}
 
