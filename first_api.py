@@ -4,15 +4,33 @@ from enum import IntEnum
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from api_database import engine, Base, get_db
 from models import Todo as TodoModel, Priority
 api = FastAPI()
+from sqlalchemy import create_engine, Integer, Float, String, Column, ForeignKey, func
+from sqlalchemy.orm import declarative_base, sessionmaker, relationship, joinedload
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+import asyncio
+
+Base = declarative_base()
+
+DATABASE_URL = "postgresql+asyncpg://postgres:1234@localhost/api_db"
+
+engine = create_async_engine(DATABASE_URL, echo=True)
+
+Async_Session_Local = sessionmaker(
+    bind=engine,
+    class_=AsyncSession,
+    expire_on_commit=False
+)
+
+async def get_db():
+    async with Async_Session_Local() as session:
+        yield session
 
 async def init_models():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-asyncio.run(init_models())
 
 class Priority(IntEnum):
     LOW = 3
@@ -26,7 +44,7 @@ class TodoBase(BaseModel):
 class TodoCreate(TodoBase):
     pass
 
-class Todo(TodoBase):
+class TodoModel(TodoBase):
     todo_id: int = Field(..., description='unique identifier for todo')
 
 class TodoUpdate(BaseModel):
